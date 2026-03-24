@@ -16,7 +16,7 @@ nome_foglio_cat = "Categorie"
 def pulisci_percorso(p):
     return p.strip().lstrip('&').strip().strip("'").strip('"').strip()
 
-print("--- ASSISTENTE CATEGORIZZATORE PRO (V19.2) ---")
+print("--- ASSISTENTE CATEGORIZZATORE PRO (V19.3) ---")
 
 if not os.path.exists(file_nuovo_nome):
     print(f"\nERRORE: Non trovo '{file_nuovo_nome}'!")
@@ -60,6 +60,15 @@ stats = {"auto": 0, "manual": 0, "saltate": 0, "paypal": 0, "luoghi_auto": 0, "p
 stop_manuale = False
 STOPWORDS = {'delle', 'dalla', 'degli', 'nella', 'della', 'dallo', 'dalle', 'con', 'del', 'per', 'presso', 'mediante', 'effettuato'}
 
+# --- CALCOLO CONTATORE (CORRETTO PER PANDAS) ---
+p_max_series = np.max(probs_code, axis=1)
+cond_ia_incerta = p_max_series < 0.50
+cond_senza_codice = df_nuovo['Code'].isna() | (df_nuovo['Code'].astype(str).str.strip().str.lower() == 'nan')
+cond_no_paypal = ~df_nuovo['Dettaglio'].fillna('').str.lower().str.contains("paga in 3 rate|paypal *paga", na=False)
+
+totale_manuali = len(df_nuovo[cond_ia_incerta & cond_senza_codice & cond_no_paypal])
+contatore_manuale = 0
+
 for i, row in df_nuovo.iterrows():
     desc_low = str(row['Dettaglio']).lower()
     if "paga in 3 rate" in desc_low or "paypal *paga" in desc_low:
@@ -91,11 +100,13 @@ for i, row in df_nuovo.iterrows():
         df_nuovo.at[i, 'Machine learning'] = f"AI: OK ({int(p_max*100)}%)"
         stats["auto"] += 1
     elif not stop_manuale:
+        contatore_manuale += 1
         print("\n" + "="*70)
         data_pulita = str(row['Data'])[:10]
         print(f"DATA: {data_pulita} | IMPORTO: {row['Importo']}€")
         # Visualizzazione semplificata richiesta: Cod conto + Dettaglio
         print(f"VOCE: {row['Cod conto']}")
+        print(f"{contatore_manuale} di {totale_manuali}")
         print("-" * 70)
         
         opzioni = []
