@@ -131,9 +131,11 @@ for i, row in df_nuovo.iterrows():
             stats["saltate"] += 1
         elif scelta.isdigit() and 1 <= int(scelta) <= len(opzioni):
             df_nuovo.at[i, 'Code'] = opzioni[int(scelta)-1]
+            df_nuovo.at[i, 'Machine learning'] = "Manuale (Suggerito)"
             stats["manual"] += 1
         else: 
             df_nuovo.at[i, 'Code'] = scelta.upper()
+            df_nuovo.at[i, 'Machine learning'] = "Manuale (Nuovo)"
             stats["manual"] += 1
     else:
         stats["saltate"] += 1
